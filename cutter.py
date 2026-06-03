@@ -446,7 +446,7 @@ class SpriteSlicerApp(ctk.CTk):
                                     visitado.add((nx, ny))
                                     cola.append((nx, ny))
                     
-                    if (max_x - min_x) > 2 or (max_y - min_y) > 2:
+                    if (max_x - min_x) > 1 or (max_y - min_y) > 1:
                         islas.append([min_x, min_y, max_x, max_y])
 
         self.islas_base_detectadas = islas
