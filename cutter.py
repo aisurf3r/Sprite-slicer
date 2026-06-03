@@ -11,7 +11,6 @@ import site
 # 🚀 SISTEMA DE AUTO-INSTALACIÓN PREVIA
 # ==========================================
 def comprobar_e_instalar_dependencias():
-    """Comprueba las dependencias e instala las faltantes usando pip."""
     dependencias = {
         "customtkinter": "customtkinter",
         "PIL": "pillow"
@@ -35,7 +34,6 @@ def comprobar_e_instalar_dependencias():
             except Exception:
                 pass 
         
-        # Fuerza a Python a actualizar sus rutas internas en caliente para reconocer los nuevos paquetes
         for path in site.getsitepackages():
             site.addsitedir(path)
         if hasattr(site, 'getusersitepackages'):
@@ -50,7 +48,6 @@ class VentanaCarga:
         self.root.title("Iniciando...")
         self.root.configure(bg="#18181B")
         
-        # Centrar la ventana de carga en la pantalla
         ancho, alto = 400, 180
         pantalla_ancho = self.root.winfo_screenwidth()
         pantalla_alto = self.root.winfo_screenheight()
@@ -94,10 +91,8 @@ class VentanaCarga:
                 self.progreso_actual += 4
             else:
                 self.progreso_actual += 0.5 
-                self.lbl_estado.configure(text="Descargando e instalando librerías...")
         else:
             self.progreso_actual += 15 
-            self.lbl_estado.configure(text="¡Todo listo! Iniciando entorno gráfico...")
 
         self.canvas_barra.coords(self.progreso_rect, 0, 0, self.progreso_actual, 8)
 
@@ -106,7 +101,6 @@ class VentanaCarga:
         else:
             self.root.after(20, self.actualizar_animacion)
 
-# Ejecutar la verificación inicial usando únicamente Tkinter nativo
 VentanaCarga()
 
 # ==========================================
@@ -117,8 +111,6 @@ try:
     from tkinter import filedialog
     from PIL import Image, ImageTk
 except ModuleNotFoundError:
-    # FALLBACK ANTI-ERRORES: Si la recarga dinámica falló en este sistema operativo,
-    # reiniciamos el script de forma totalmente transparente. Esta vez abrirá al instante.
     subprocess.Popen([sys.executable] + sys.argv)
     sys.exit()
 
@@ -132,22 +124,18 @@ class SpriteSlicerApp(ctk.CTk):
         
         self.after(100, self.forzar_maximizado)
         
-        # Variables globales de control
         self.ruta_imagen_original = None
         self.imagen_pil_original = None
         self.imagen_tk_render = None
         
-        # Coordenadas y estados del ratón
         self.start_x = None
         self.start_y = None
         self.rect_id = None
         self.recorte_en_progreso = False
         
-        # Estructuras de datos para cálculo rápido
         self.islas_base_detectadas = []
         self.cajas_previsualizadas = []
 
-        # Configuración del Layout (Grid)
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -163,7 +151,6 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.titulo_label.pack(pady=(20, 10), padx=15)
 
-        # 1. Botón para importar imágenes
         self.btn_importar = ctk.CTkButton(
             self.panel_control, 
             text="1. Importar Imagen", 
@@ -174,7 +161,6 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.btn_importar.pack(pady=10, padx=15, fill="x")
 
-        # Configuración del nombre del archivo de salida
         self.lbl_nombre = ctk.CTkLabel(self.panel_control, text="Nombre de salida (se añadirá 1, 2, 3...):", font=ctk.CTkFont(size=12))
         self.lbl_nombre.pack(pady=(10, 2), padx=15, anchor="w")
         
@@ -182,11 +168,9 @@ class SpriteSlicerApp(ctk.CTk):
         self.entry_nombre.pack(pady=5, padx=15, fill="x")
         self.entry_nombre.insert(0, "sprite")
 
-        # --- SECCIÓN: MODO AUTOMÁTICO (ESTRICTAMENTE OPCIONAL) ---
-        self.lbl_seccion_auto = ctk.CTkLabel(self.panel_control, text="⚙️ Modo Automático (Solo PNG):", font=ctk.CTkFont(size=13, weight="bold"))
+        self.lbl_seccion_auto = ctk.CTkLabel(self.panel_control, text="⚙️ Modo Automático:", font=ctk.CTkFont(size=13, weight="bold"))
         self.lbl_seccion_auto.pack(pady=(15, 2), padx=15, anchor="w")
 
-        # Mensaje de advertencia dinámico para formatos sin transparencia (JPG)
         self.lbl_aviso_jpg = ctk.CTkLabel(
             self.panel_control,
             text="",
@@ -197,7 +181,6 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.lbl_aviso_jpg.pack(pady=2, padx=15, anchor="w")
 
-        # SWITCH: El usuario decide cuándo quiere ver las cajas automáticas
         self.switch_auto = ctk.CTkSwitch(
             self.panel_control, 
             text="Ver Previsualización Auto", 
@@ -213,7 +196,7 @@ class SpriteSlicerApp(ctk.CTk):
         
         self.lbl_tolerancia_txt = ctk.CTkLabel(
             self.frame_tolerancia, 
-            text="Tolerancia de Agrupación: 4px", 
+            text="Tolerancia de Agrupación: 16px", 
             font=ctk.CTkFont(size=12)
         )
         self.lbl_tolerancia_txt.pack(anchor="w")
@@ -226,7 +209,7 @@ class SpriteSlicerApp(ctk.CTk):
             command=self.al_cambiar_tolerancia
         )
         self.slider_tolerancia.pack(pady=5, fill="x")
-        self.slider_tolerancia.set(4)
+        self.slider_tolerancia.set(16)
         self.slider_tolerancia.configure(state="disabled")
 
         self.btn_autocorte = ctk.CTkButton(
@@ -240,7 +223,6 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.btn_autocorte.pack(pady=5, padx=15, fill="x")
 
-        # --- SECCIÓN: MODO MANUAL ---
         self.lbl_seccion_manual = ctk.CTkLabel(self.panel_control, text="🖱️ Modo Manual (Siempre Activo):", font=ctk.CTkFont(size=13, weight="bold"))
         self.lbl_seccion_manual.pack(pady=(15, 2), padx=15, anchor="w")
 
@@ -255,7 +237,6 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.btn_cancelar.pack(pady=5, padx=15, fill="x")
 
-        # --- PANEL CONTENEDOR PARA EL LOADER ANIMADO ---
         self.loader_frame = ctk.CTkFrame(self.panel_control, fg_color="#1E1E22", height=75)
         self.loader_frame.pack(pady=15, padx=15, fill="x")
         self.loader_frame.pack_propagate(False) 
@@ -272,7 +253,6 @@ class SpriteSlicerApp(ctk.CTk):
         self.progressbar.pack(pady=5, padx=15, fill="x")
         self.progressbar.set(0)
         
-        # Control del Loader desde el hilo principal
         self.loader_progreso_actual = 0.0
         self.loader_direccion = 0.05
         self.animacion_corriendo = False
@@ -290,13 +270,12 @@ class SpriteSlicerApp(ctk.CTk):
         )
         self.btn_github.pack(side="bottom", anchor="center", pady=(10, 15), padx=15)
 
-        # Cuadro de Información de Estado General
         self.info_frame = ctk.CTkFrame(self.panel_control, fg_color="transparent")
         self.info_frame.pack(pady=5, padx=15, fill="both", expand=True)
 
         self.info_label = ctk.CTkLabel(
             self.info_frame, 
-            text="• MODO MANUAL:\nHaz clic y arrastra el ratón sobre la imagen limpia.\n\n• MODO AUTOMÁTICO:\nRequiere formato PNG transparente para poder precalcular las cajas verdes.", 
+            text="• MODO MANUAL:\nHaz clic y arrastra el ratón sobre la imagen.\n\n• MODO AUTOMÁTICO:\nPrecalcula las cajas aislando el fondo de forma inteligente.", 
             justify="left",
             wraplength=250,
             font=ctk.CTkFont(size=11),
@@ -318,7 +297,7 @@ class SpriteSlicerApp(ctk.CTk):
         self.zona_canvas.grid_rowconfigure(0, weight=1)
         self.zona_canvas.grid_columnconfigure(0, weight=1)
 
-        self.canvas = ctk.CTkCanvas(self.zona_canvas, bg="#18181B", highlightthickness=0)
+        self.canvas = tk.Canvas(self.zona_canvas, bg="#18181B", highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="nsew")
 
         self.scroll_x = ctk.CTkScrollbar(self.zona_canvas, orientation="horizontal", command=self.canvas.xview)
@@ -329,7 +308,6 @@ class SpriteSlicerApp(ctk.CTk):
         
         self.canvas.configure(xscrollcommand=self.scroll_x.set, yscrollcommand=self.scroll_y.set)
 
-        # Eventos del Canvas
         self.canvas.bind("<Button-1>", self.al_hacer_click)
         self.canvas.bind("<B1-Motion>", self.al_arrastrar)
         self.canvas.bind("<ButtonRelease-1>", self.al_soltar_raton)
@@ -346,7 +324,6 @@ class SpriteSlicerApp(ctk.CTk):
     def abrir_repositorio_github(self):
         webbrowser.open_new_tab("https://github.com/aisurf3r/Sprite-slicer")
 
-    # --- ANIMACION LOADER ---
     def iniciar_animacion_loader(self, texto):
         self.lbl_loader_status.configure(text=texto, text_color="#60A5FA")
         self.btn_importar.configure(state="disabled")
@@ -377,7 +354,6 @@ class SpriteSlicerApp(ctk.CTk):
         self.lbl_loader_status.configure(text=texto_final, text_color="#10B981")
         self.btn_importar.configure(state="normal")
 
-    # --- LÓGICA INCREMENTAL ---
     def obtener_siguiente_indice(self, carpeta, nombre_base):
         indice = 1
         while True:
@@ -405,21 +381,40 @@ class SpriteSlicerApp(ctk.CTk):
             self.btn_autocorte.configure(state="disabled", text="💾 Guardar Autocorte (0 partes)")
             self.lbl_aviso_jpg.configure(text="")
             
-            tiene_alfa = self.imagen_pil_original.mode in ('RGBA', 'LA') or (self.imagen_pil_original.mode == 'P' and 'transparency' in self.imagen_pil_original.info)
-            
-            if tiene_alfa:
-                self.iniciar_animacion_loader("Analizando transparencia...")
-                threading.Thread(target=self.hilo_analisis_subpíxel, daemon=True).start()
-            else:
-                self.lbl_aviso_jpg.configure(text="⚠️ El Modo Auto requiere imágenes PNG\ncon fondo transparente.")
-                self.detener_animacion_loader("Modo manual activo")
-                self.status_label.configure(text="Imagen opaca cargada.\nUsa el arrastre manual.", text_color="#F59E0B")
+            self.iniciar_animacion_loader("Analizando estructura de la imagen...")
+            threading.Thread(target=self.hilo_analisis_subpíxel, daemon=True).start()
 
     def hilo_analisis_subpíxel(self):
         img = self.imagen_pil_original.convert('RGBA')
         ancho, alto = img.size
         pixeles = img.load()
 
+        # Comprobar si hay canales transparentes nativos (PNG real)
+        tiene_transparencia_real = False
+        for y in range(min(alto, 50)): 
+            for x in range(ancho):
+                if pixeles[x, y][3] < 255:
+                    tiene_transparencia_real = True
+                    break
+            if tiene_transparencia_real: break
+
+        # Identificar color de fondo predominante si es opaco (JPG)
+        muestras = [pixeles[0, 0], pixeles[ancho-1, 0], pixeles[0, alto-1], pixeles[ancho-1, alto-1]]
+        color_fondo = max(muestras, key=muestras.count)
+        rf, gf, bf, _ = color_fondo
+        TOLERANCIA_FONDO = 20  
+
+        # Inyectar canal alfa si la imagen es plana
+        if not tiene_transparencia_real:
+            for y in range(alto):
+                for x in range(ancho):
+                    r, g, b, a = pixeles[x, y]
+                    if abs(r - rf) < TOLERANCIA_FONDO and abs(g - gf) < TOLERANCIA_FONDO and abs(b - bf) < TOLERANCIA_FONDO:
+                        pixeles[x, y] = (r, g, b, 0)
+                    else:
+                        pixeles[x, y] = (r, g, b, 255)
+
+        # Motor de busqueda Flood Fill (Estructura Fiel Original)
         visitado = set()
         islas = []
         UMBRAL_ALFA = 10 
@@ -446,7 +441,8 @@ class SpriteSlicerApp(ctk.CTk):
                                     visitado.add((nx, ny))
                                     cola.append((nx, ny))
                     
-                    if (max_x - min_x) > 0 or (max_y - min_y) > 0:
+                    # 🔥 FILTRO RESTAURADO: Filtra de manera segura el ruido para que no provoque fusiones fantasmas
+                    if (max_x - min_x) > 2 or (max_y - min_y) > 2:
                         islas.append([min_x, min_y, max_x, max_y])
 
         self.islas_base_detectadas = islas
@@ -456,14 +452,11 @@ class SpriteSlicerApp(ctk.CTk):
         if self.islas_base_detectadas:
             self.switch_auto.configure(state="normal")
             self.detener_animacion_loader("¡Modo Auto Disponible!")
-            self.status_label.configure(text="PNG transparente listo.\nModo manual activo.\nPuedes encender el Modo Auto.", text_color="#34D399")
+            self.status_label.configure(text="Imagen analizada.\nModo manual activo.\nPuedes encender el Modo Auto.", text_color="#34D399")
         else:
-            self.lbl_aviso_jpg.configure(text="⚠️ No se detectó transparencia real\nen este archivo PNG.")
+            self.lbl_aviso_jpg.configure(text="⚠️ No se detectó un fondo procesable.")
             self.detener_animacion_loader("Modo manual activo")
-            self.status_label.configure(text="PNG sin transparencia.\nUsa el arrastre manual.", text_color="#F59E0B")
-
-    def toggle_modo_auto_wrapper(self):
-        self.alternar_modo_auto()
+            self.status_label.configure(text="Usa el arrastre manual.", text_color="#F59E0B")
 
     def alternar_modo_auto(self):
         if self.switch_auto.get() == 1:
@@ -567,7 +560,6 @@ class SpriteSlicerApp(ctk.CTk):
         self.status_label.configure(text=f"¡Éxito! {cantidad} archivos exportados.", text_color="#10B981")
         self.after(3000, self.limpiar_mensajes_estado)
 
-    # ---------------- Lógica del Modo Manual ----------------
     def al_hacer_click(self, event):
         if not self.imagen_pil_original:
             return
