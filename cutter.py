@@ -213,7 +213,7 @@ class SpriteSlicerApp(ctk.CTk):
         
         self.lbl_tolerancia_txt = ctk.CTkLabel(
             self.frame_tolerancia, 
-            text="Tolerancia de Agrupación: 16px", 
+            text="Tolerancia de Agrupación: 4px", 
             font=ctk.CTkFont(size=12)
         )
         self.lbl_tolerancia_txt.pack(anchor="w")
@@ -226,7 +226,7 @@ class SpriteSlicerApp(ctk.CTk):
             command=self.al_cambiar_tolerancia
         )
         self.slider_tolerancia.pack(pady=5, fill="x")
-        self.slider_tolerancia.set(16)
+        self.slider_tolerancia.set(4)
         self.slider_tolerancia.configure(state="disabled")
 
         self.btn_autocorte = ctk.CTkButton(
