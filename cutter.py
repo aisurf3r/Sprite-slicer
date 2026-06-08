@@ -414,7 +414,7 @@ class SpriteSlicerApp(ctk.CTk):
                     else:
                         pixeles[x, y] = (r, g, b, 255)
 
-        # Motor de busqueda Flood Fill (Estructura Fiel Original)
+        # Motor de busqueda Flood Fill 
         visitado = set()
         islas = []
         UMBRAL_ALFA = 10 
@@ -441,7 +441,7 @@ class SpriteSlicerApp(ctk.CTk):
                                     visitado.add((nx, ny))
                                     cola.append((nx, ny))
                     
-                    # 🔥 FILTRO RESTAURADO: Filtra de manera segura el ruido para que no provoque fusiones fantasmas
+                    # 🔥 FILTRO: Filtra de manera segura el ruido para que no provoque fusiones fantasmas
                     if (max_x - min_x) > 2 or (max_y - min_y) > 2:
                         islas.append([min_x, min_y, max_x, max_y])
 
@@ -479,49 +479,69 @@ class SpriteSlicerApp(ctk.CTk):
     def al_cambiar_tolerancia(self, valor):
         if not self.islas_base_detectadas or self.switch_auto.get() == 0:
             return
-            
-        valor_int = int(valor)
-        self.lbl_tolerancia_txt.configure(text=f"Tolerancia de Agrupación: {valor_int}px")
-        
-        islas_trabajo = [list(caja) for caja in self.islas_base_detectadas]
-        
-        cambio = True
-        while cambio:
-            cambio = False
-            cajas_fusionadas = []
-            while islas_trabajo:
-                actual = islas_trabajo.pop(0)
-                fusiono = False
-                
-                for otra in cajas_fusionadas:
-                    en_rango_x = not (actual[2] + valor_int < otra[0] or actual[0] - valor_int > otra[2])
-                    en_rango_y = not (actual[3] + valor_int < otra[1] or actual[1] - valor_int > otra[3])
-                    
-                    if en_rango_x and en_rango_y:
-                        otra[0] = min(actual[0], otra[0])
-                        otra[1] = min(actual[1], otra[1])
-                        otra[2] = max(actual[2], otra[2])
-                        otra[3] = max(actual[3], otra[3])
-                        fusiono = True
-                        cambio = True
-                        break
-                
-                if not fusiono:
-                    cajas_fusionadas.append(actual)
-            islas_trabajo = cajas_fusionadas
 
-        self.cajas_previsualizadas = islas_trabajo
+        tol = int(float(valor))
+        self.lbl_tolerancia_txt.configure(
+            text=f"Tolerancia de Agrupación: {tol}px"
+        )
+
+        cajas = [list(c) for c in self.islas_base_detectadas]
+        n = len(cajas)
+
+        # Unión-Find: agrupación estable y monótona.
+        parent = list(range(n))
+
+        def find(x):
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for i in range(n):
+            a = cajas[i]
+            for j in range(i + 1, n):
+                b = cajas[j]
+
+                gap_x = max(0, max(b[0] - a[2], a[0] - b[2]))
+                gap_y = max(0, max(b[1] - a[3], a[1] - b[3]))
+
+                if gap_x <= tol and gap_y <= tol:
+                    union(i, j)
+
+        grupos = {}
+        for i, c in enumerate(cajas):
+            r = find(i)
+            grupos.setdefault(r, []).append(c)
+
+        resultado = []
+        for comp in grupos.values():
+            x1 = min(c[0] for c in comp)
+            y1 = min(c[1] for c in comp)
+            x2 = max(c[2] for c in comp)
+            y2 = max(c[3] for c in comp)
+            resultado.append([x1, y1, x2, y2])
+
+        self.cajas_previsualizadas = resultado
 
         self.canvas.delete("rect_auto")
         ancho, alto = self.imagen_pil_original.size
+
         for (x1, y1, x2, y2) in self.cajas_previsualizadas:
             self.canvas.create_rectangle(
-                max(0, x1 - 2), max(0, y1 - 2), 
-                min(ancho, x2 + 2), min(alto, y2 + 2), 
+                max(0, x1 - 2), max(0, y1 - 2),
+                min(ancho, x2 + 2), min(alto, y2 + 2),
                 outline="#34D399", width=2, tags="rect_auto"
             )
 
-        self.btn_autocorte.configure(text=f"💾 Guardar Autocorte ({len(self.cajas_previsualizadas)} partes)")
+        self.btn_autocorte.configure(
+            text=f"💾 Guardar Autocorte ({len(self.cajas_previsualizadas)} partes)"
+        )
+
 
     def guardar_autocorte_confirmado(self):
         if not self.imagen_pil_original or not self.cajas_previsualizadas:
